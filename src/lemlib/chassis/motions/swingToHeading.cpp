@@ -84,10 +84,10 @@ void lemlib::Chassis::swingToHeading(float theta, DriveSide lockedSide, int time
         // move the drivetrain
         if (lockedSide == DriveSide::LEFT) {
             platform::drive(drivetrain.rightMotors, -motorPower);
-            drivetrain.leftMotors->stop(vex::hold);
+            drivetrain.leftMotors->stop(vex::brakeType::hold);
         } else {
             platform::drive(drivetrain.leftMotors, motorPower);
-            drivetrain.rightMotors->stop(vex::hold);
+            drivetrain.rightMotors->stop(vex::brakeType::hold);
         }
 
         // delay to save resources

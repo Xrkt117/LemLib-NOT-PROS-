@@ -56,7 +56,9 @@ class TrackingWheel {
          * lemlib::TrackingWheel horizontalTrackingWheel(&horizontalEncoder, lemlib::Omniwheel::OLD_325, -2, 5.0/3.0);
          * @endcode
          */
+#if LEMLIB_FULL_VEX_SDK
         TrackingWheel(vex::encoder* encoder, float wheelDiameter, float distance, float gearRatio = 1);
+#endif
         /**
          * @brief Create a new tracking wheel
          *
@@ -88,7 +90,9 @@ class TrackingWheel {
          * lemlib::TrackingWheel horizontalTrackingWheel(&horizontalEncoder, lemlib::Omniwheel::OLD_325, -2, 5.0/3.0);
          * @endcode
          */
+#if LEMLIB_FULL_VEX_SDK
         TrackingWheel(vex::rotation* encoder, float wheelDiameter, float distance, float gearRatio = 1);
+#endif
         /**
          * @brief Create a new tracking wheel
          *
@@ -187,8 +191,10 @@ class TrackingWheel {
         float distance;
         float rpm;
         float cartridgeRpm;
+#if LEMLIB_FULL_VEX_SDK
         vex::encoder* encoder = nullptr;
         vex::rotation* rotation = nullptr;
+#endif
         vex::motor_group* motors = nullptr;
         float gearRatio = 1;
 };

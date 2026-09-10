@@ -13,6 +13,16 @@ void delay(uint32_t milliseconds);
 uint32_t competitionStatus();
 void drive(vex::motor_group* motors, float power);
 
+class Mutex {
+    public:
+        Mutex();
+        void lock();
+        void unlock();
+
+    private:
+        volatile int locked;
+};
+
 class AsyncTask {
     public:
         AsyncTask();
@@ -25,9 +35,12 @@ class AsyncTask {
         void stop();
 
     private:
+#if LEMLIB_FULL_VEX_SDK
         static int run(void* argument);
-
         vex::task* task;
+#else
+        vex::thread* task;
+#endif
         std::function<void()> callback;
 };
 

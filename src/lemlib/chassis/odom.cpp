@@ -11,7 +11,7 @@
 #include "lemlib/chassis/trackingWheel.hpp"
 
 // tracking thread
-vex::task* trackingTask = nullptr;
+lemlib::platform::AsyncTask* trackingTask = nullptr;
 
 // global variables
 lemlib::OdomSensors odomSensors(nullptr, nullptr, nullptr, nullptr, nullptr); // the sensors to be used for odometry
@@ -84,7 +84,7 @@ void lemlib::update() {
     if (odomSensors.vertical2 != nullptr) vertical2Raw = odomSensors.vertical2->getDistanceTraveled();
     if (odomSensors.horizontal1 != nullptr) horizontal1Raw = odomSensors.horizontal1->getDistanceTraveled();
     if (odomSensors.horizontal2 != nullptr) horizontal2Raw = odomSensors.horizontal2->getDistanceTraveled();
-    if (odomSensors.imu != nullptr) imuRaw = degToRad(odomSensors.imu->rotation(vex::degrees));
+    if (odomSensors.imu != nullptr) imuRaw = degToRad(odomSensors.imu->rotation(vex::rotationUnits::deg));
 
     // calculate the change in sensor values
     float deltaVertical1 = vertical1Raw - prevVertical1;
@@ -182,16 +182,16 @@ void lemlib::update() {
     odomLocalSpeed.theta = ema(deltaHeading / 0.01, odomLocalSpeed.theta, 0.95);
 }
 
-static int trackingLoop() {
+static void trackingLoop() {
     while (true) {
         lemlib::update();
         lemlib::platform::delay(10);
     }
-    return 0;
 }
 
 void lemlib::init() {
     if (trackingTask == nullptr) {
-        trackingTask = new vex::task(trackingLoop);
+        trackingTask = new platform::AsyncTask();
+        trackingTask->start(trackingLoop);
     }
 }

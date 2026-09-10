@@ -4,6 +4,7 @@
 // https://www.chiefdelphi.com/uploads/default/original/3X/b/e/be0e06de00e07db66f97686505c3f4dde2e332dc.pdf
 
 #include <cmath>
+#include <limits>
 #include <vector>
 #include <string>
 #include "lemlib/platform.hpp"
@@ -98,7 +99,7 @@ std::vector<lemlib::Pose> getData(const asset& path) {
  */
 int findClosest(lemlib::Pose pose, std::vector<lemlib::Pose> path) {
     int closestPoint;
-    float closestDist = infinity();
+    float closestDist = std::numeric_limits<float>::infinity();
 
     // loop through all path points
     for (int i = 0; i < path.size(); i++) {

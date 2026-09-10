@@ -4,7 +4,7 @@
 #include <functional>
 #include <string>
 
-#include "vex.h"
+#include "lemlib/platform.hpp"
 
 namespace lemlib {
 /**
@@ -55,7 +55,6 @@ class Buffer {
          *
          */
         void taskLoop();
-        static int taskEntry(void* argument);
 
         /**
          * @brief The function that will be applied to each string in the buffer when it is removed.
@@ -65,8 +64,8 @@ class Buffer {
 
         std::deque<std::string> buffer = {};
 
-        vex::mutex mutex;
-        vex::task* task;
+        platform::Mutex mutex;
+        platform::AsyncTask task;
 
         uint32_t rate;
 };

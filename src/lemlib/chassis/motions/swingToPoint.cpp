@@ -87,10 +87,10 @@ void lemlib::Chassis::swingToPoint(float x, float y, DriveSide lockedSide, int t
         // move the drivetrain
         if (lockedSide == DriveSide::LEFT) {
             platform::drive(drivetrain.rightMotors, -motorPower);
-            drivetrain.leftMotors->stop(vex::hold);
+            drivetrain.leftMotors->stop(vex::brakeType::hold);
         } else {
             platform::drive(drivetrain.leftMotors, motorPower);
-            drivetrain.rightMotors->stop(vex::hold);
+            drivetrain.rightMotors->stop(vex::brakeType::hold);
         }
 
         platform::delay(10);

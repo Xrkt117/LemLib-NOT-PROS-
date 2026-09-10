@@ -9,6 +9,13 @@ This fork runs on a VEX V5 Brain with the official VEXcode C++ SDK. It does not 
 3. Connect the V5 Brain by USB.
 4. Use the VEX extension's **Build** or **Build and Download** command.
 
+## Drive Lab simulator
+
+The same project can be opened directly in V5 Drive Lab and run with **Build & Run**. The compatibility layer detects
+Drive Lab automatically; no simulator-specific setting is required. Drive Lab currently simulates drivetrain motor
+encoders and the inertial sensor, while physical three-wire encoders and rotation sensors remain available when the
+project is built for a real V5 Brain.
+
 The included `src/main.cpp` is a complete six-motor drivetrain example. Change its ports, reversed flags, wheel size,
 track width, gear cartridge speed, and PID values for your robot before downloading it.
 

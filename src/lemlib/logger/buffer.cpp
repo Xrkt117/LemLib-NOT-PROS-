@@ -7,14 +7,8 @@
 namespace lemlib {
 Buffer::Buffer(std::function<void(const std::string&)> bufferFunc)
     : bufferFunc(bufferFunc),
-      task(nullptr),
       rate(50) {
-    task = new vex::task(taskEntry, this);
-}
-
-int Buffer::taskEntry(void* argument) {
-    static_cast<Buffer*>(argument)->taskLoop();
-    return 0;
+    task.start([this]() { taskLoop(); });
 }
 
 bool Buffer::buffersEmpty() {
@@ -28,11 +22,7 @@ Buffer::~Buffer() {
     // make sure when the destructor is called so all
     // the messages are logged
     while (!buffersEmpty()) { platform::delay(10); }
-    if (task != nullptr) {
-        task->stop();
-        delete task;
-        task = nullptr;
-    }
+    task.stop();
 }
 
 void Buffer::pushToBuffer(const std::string& bufferData) {

@@ -944,7 +944,7 @@ class Chassis {
         ExitCondition angularLargeExit;
         ExitCondition angularSmallExit;
     private:
-        vex::mutex mutex;
+        platform::Mutex mutex;
         platform::AsyncTask motionTask;
 };
 } // namespace lemlib

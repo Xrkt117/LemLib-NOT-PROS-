@@ -1,55 +1,50 @@
-#include "main.h"
-#include "lemlog/logger/sinks/terminal.hpp"
-#include "hardware/Motor/MotorGroup.hpp"
-#include "hardware/IMU/V5InertialSensor.hpp"
-#include "lemlib/tracking/TrackingWheelOdom.hpp"
-#include "lemlib/motions/turnTo.hpp"
-#include "pros/llemu.hpp"
+#include "lemlib.h"
 
-logger::Terminal terminal;
+brain Brain;
+controller Controller;
+competition Competition;
 
-lemlib::MotorGroup rightDrive({8, 10}, 360_rpm);
-lemlib::MotorGroup leftDrive({-1, 11, -12, 13}, 360_rpm);
+motor leftFront(PORT1, ratio6_1, true);
+motor leftMiddle(PORT2, ratio6_1, false);
+motor leftBack(PORT3, ratio6_1, true);
+motor rightFront(PORT4, ratio6_1, false);
+motor rightMiddle(PORT5, ratio6_1, true);
+motor rightBack(PORT6, ratio6_1, false);
 
-lemlib::V5InertialSensor imu(1);
+motor_group leftMotors(leftFront, leftMiddle, leftBack);
+motor_group rightMotors(rightFront, rightMiddle, rightBack);
+inertial inertialSensor(PORT10);
 
-lemlib::TrackingWheel verticalTracker({'E', 'F'}, true, 2.75_in, 26.5_cm / 2);
-lemlib::TrackingWheel horizontalTracker({'G', 'H'}, false, 2.75_in, -26.5_cm / 2);
+Drivetrain driveConfig(&leftMotors, &rightMotors, 12.0, 4.0, 600, 2);
 
-lemlib::TrackingWheelOdometry odom({&imu}, {&verticalTracker}, {&horizontalTracker});
+ControllerSettings lateralController(10, 0, 3, 3, 1, 100, 3, 500, 5);
+ControllerSettings angularController(2, 0, 10, 3, 1, 100, 3, 500, 0);
 
-lemlib::PID pid(0.05, 0, 0);
-lemlib::ExitCondition<AngleRange> exitCondition(1_stDeg, 2_sec);
+OdomSensors sensors(nullptr, nullptr, nullptr, nullptr, &inertialSensor);
+ExpoDriveCurve throttleCurve(3, 10, 1.019);
+ExpoDriveCurve steerCurve(3, 10, 1.019);
 
-void initialize() {
-    terminal.setLoggingLevel(logger::Level::DEBUG);
-    pros::lcd::initialize();
+Chassis chassis(driveConfig, lateralController, angularController, sensors, &throttleCurve, &steerCurve);
 
-    imu.calibrate();
-    pros::delay(3200);
-    odom.startTask();
-    pros::delay(100);
-    pros::Task([&] {
-        while (true) {
-            auto p = odom.getPose();
-            pros::lcd::print(0, "X: %f", to_in(p.x));
-            pros::lcd::print(1, "Y: %f", to_in(p.y));
-            pros::lcd::print(2, "Theta: %f", to_cDeg(p.orientation));
-            pros::delay(10);
-        }
-    });
-    lemlib::turnTo(90_cDeg, 100_sec, {.slew = 1},
-                   {
-                       .angularPID = pid,
-                       .exitConditions = std::vector<lemlib::ExitCondition<AngleRange>>({exitCondition}),
-                       .poseGetter = [] -> units::Pose { return odom.getPose(); },
-                       .leftMotors = leftDrive,
-                       .rightMotors = rightDrive,
-                   });
+void autonomous() {
+    chassis.setPose(0, 0, 0);
+    chassis.moveToPoint(0, 24, 3000);
+    chassis.turnToHeading(90, 1500);
 }
 
-void disabled() {}
+void driverControl() {
+    while (true) {
+        int throttle = Controller.Axis3.position();
+        int turn = Controller.Axis1.position();
+        chassis.arcade(throttle, turn);
+        wait(10, msec);
+    }
+}
 
-void autonomous() {}
+int main() {
+    chassis.calibrate();
+    Competition.autonomous(autonomous);
+    Competition.drivercontrol(driverControl);
 
-void opcontrol() {}
+    while (true) wait(100, msec);
+}

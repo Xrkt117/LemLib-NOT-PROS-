@@ -1,46 +1,57 @@
-################################################################################
-######################### User configurable parameters #########################
-# filename extensions
-CEXTS:=c
-ASMEXTS:=s S
-CXXEXTS:=cpp c++ cc
+# Official VEX V5 C++ build, compatible with the VEX Robotics VS Code extension.
 
-# probably shouldn't modify these, but you may need them below
-ROOT=.
-FWDIR:=$(ROOT)/firmware
-BINDIR=$(ROOT)/bin
-SRCDIR=$(ROOT)/src
-INCDIR=$(ROOT)/include
+PROJECT ?= LemLib-NOT-PROS
+ifneq ($(P),)
+PROJECT := $(P)
+endif
+PLATFORM := vexv5
+BUILD := build
+VEX_SDK_PATH := $(T)
 
-WARNFLAGS+=
-EXTRA_CFLAGS=
-EXTRA_CXXFLAGS=
+CC := clang
+CXX := clang
+OBJCOPY := arm-none-eabi-objcopy
+SIZE := arm-none-eabi-size
+LINK := arm-none-eabi-ld
 
-# Set to 1 to enable hot/cold linking
-USE_PACKAGE:=1
+SOURCES := $(shell find src -type f \( -name '*.cpp' -o -name '*.c' \))
+HEADERS := $(shell find include -type f \( -name '*.hpp' -o -name '*.h' \))
+OBJECTS := $(patsubst %.cpp,$(BUILD)/%.o,$(filter %.cpp,$(SOURCES)))
+OBJECTS += $(patsubst %.c,$(BUILD)/%.o,$(filter %.c,$(SOURCES)))
 
-# Add libraries you do not wish to include in the cold image here
-# EXCLUDE_COLD_LIBRARIES:= $(FWDIR)/your_library.a
-EXCLUDE_COLD_LIBRARIES:= 
+SDK := $(VEX_SDK_PATH)/$(PLATFORM)
+TOOL_INC := -I"$(SDK)/clang/8.0.0/include" -I"$(SDK)/gcc/include/c++/4.9.3" \
+            -I"$(SDK)/gcc/include/c++/4.9.3/arm-none-eabi/armv7-ar/thumb" -I"$(SDK)/gcc/include"
+COMMON := -target thumbv7-none-eabi -fshort-enums -Wno-unknown-attributes \
+          -U__INT32_TYPE__ -U__UINT32_TYPE__ -D__INT32_TYPE__=long -D__UINT32_TYPE__='unsigned long' \
+          -march=armv7-a -mfpu=neon -mfloat-abi=softfp -Os -Wall -DVexV5
+CXXFLAGS := $(COMMON) -Werror=return-type -fno-rtti -fno-threadsafe-statics -fno-exceptions \
+            -std=gnu++11 -ffunction-sections -fdata-sections -Iinclude -I"$(SDK)/include" $(TOOL_INC)
+CFLAGS := $(COMMON) -Werror=return-type -ansi -std=gnu99 -Iinclude -I"$(SDK)/include" $(TOOL_INC)
+LDFLAGS := -nostdlib -T "$(SDK)/lscript.ld" -R "$(SDK)/stdlib_0.lib" \
+           -Map="$(BUILD)/$(PROJECT).map" --gc-section -L"$(SDK)" -L"$(SDK)/gcc/libs"
+LIBS := --start-group -lv5rt -lstdc++ -lc -lm -lgcc --end-group
 
-# Set this to 1 to add additional rules to compile your project as a PROS library template
-IS_LIBRARY:=1
-LIBNAME:=LemLib
-VERSION:=0.6.0
+.PHONY: all clean
+all: $(BUILD)/$(PROJECT).bin
 
-# EXCLUDE_SRC_FROM_LIB= $(SRCDIR)/unpublishedfile.c
-# this line excludes opcontrol.c and similar files
-EXCLUDE_SRC_FROM_LIB+=$(foreach file, $(SRCDIR)/main,$(foreach cext,$(CEXTS),$(file).$(cext)) $(foreach cxxext,$(CXXEXTS),$(file).$(cxxext)))
+$(BUILD)/%.o: %.cpp $(HEADERS) Makefile
+	@mkdir -p "$(@D)"
+	@echo "CXX $<"
+	@$(CXX) $(CXXFLAGS) -c -o "$@" "$<"
 
-# files that get distributed to every user (beyond your source archive) - add
-# whatever files you want here. This line is configured to add all header files
-# that are in the the include directory get exported
+$(BUILD)/%.o: %.c $(HEADERS) Makefile
+	@mkdir -p "$(@D)"
+	@echo "CC  $<"
+	@$(CC) $(CFLAGS) -c -o "$@" "$<"
 
-TEMPLATE_FILES=$(INCDIR)/units/*.hpp $(INCDIR)/lemlib/chassis/differential/*.hpp $(INCDIR)/lemlib/chassis/differential/motions/*.hpp
+$(BUILD)/$(PROJECT).elf: $(OBJECTS)
+	@echo "LINK $@"
+	@$(LINK) $(LDFLAGS) -o "$@" $^ $(LIBS)
+	@$(SIZE) "$@"
 
-.DEFAULT_GOAL=quick
+$(BUILD)/$(PROJECT).bin: $(BUILD)/$(PROJECT).elf
+	@$(OBJCOPY) -O binary "$<" "$@"
 
-################################################################################
-################################################################################
-########## Nothing below this line should be edited by typical users ###########
--include ./common.mk
+clean:
+	@rm -rf "$(BUILD)"

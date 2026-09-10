@@ -1,0 +1,19 @@
+{
+  "extension": {
+    "version": "0.8.0",
+    "json": 2
+  },
+  "project": {
+    "name": "LemLib-NOT-PROS",
+    "description": "LemLib motion control ported to official VEXcode C++",
+    "creationDate": "2026-09-09T00:00:00.000Z",
+    "platform": "V5",
+    "language": "cpp",
+    "slot": 1,
+    "sdkVersion": "V5_20240802_15_00_00",
+    "cpp": {
+      "includePath": [],
+      "printf_float": true
+    }
+  }
+}

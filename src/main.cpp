@@ -26,6 +26,26 @@ ExpoDriveCurve steerCurve(3, 10, 1.019);
 
 Chassis chassis(driveConfig, lateralController, angularController, sensors, &throttleCurve, &steerCurve);
 
+void updateBrainScreen() {
+    while (true) {
+        Pose pose = chassis.getPose();
+        const char* mode = "Mode: Disabled";
+        if (Competition.isAutonomous()) mode = "Mode: Autonomous";
+        else if (Competition.isDriverControl()) mode = "Mode: Driver";
+
+        Brain.Screen.clearScreen();
+        Brain.Screen.setFont(mono20);
+        Brain.Screen.printAt(20, 30, "LemLib VEXcode");
+        Brain.Screen.printAt(20, 70, "X: %.2f in", pose.x);
+        Brain.Screen.printAt(20, 105, "Y: %.2f in", pose.y);
+        Brain.Screen.printAt(20, 140, "Heading: %.1f deg", pose.theta);
+        Brain.Screen.printAt(20, 185, mode);
+        Brain.Screen.render();
+
+        wait(100, msec);
+    }
+}
+
 void autonomous() {
     chassis.setPose(0, 0, 0);
     chassis.moveToPoint(0, 24, 3000);
@@ -42,7 +62,13 @@ void driverControl() {
 }
 
 int main() {
+    Brain.Screen.clearScreen();
+    Brain.Screen.setFont(mono20);
+    Brain.Screen.printAt(20, 40, "Calibrating inertial...");
+    Brain.Screen.render();
+
     chassis.calibrate();
+    thread screenThread(updateBrainScreen);
     Competition.autonomous(autonomous);
     Competition.drivercontrol(driverControl);
 
